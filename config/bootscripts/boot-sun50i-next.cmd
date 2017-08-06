@@ -83,5 +83,9 @@ load ${devtype} 0 ${kernel_addr_r} ${prefix}Image
 
 booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
 
+# set hdmi mode
+setenv video-mode sunxi:1600x900,monitor=dvi,hpd=0,edid=0
+saveenv
+
 # Recompile with:
 # mkimage -C none -A arm -T script -d /boot/boot.cmd /boot/boot.scr
