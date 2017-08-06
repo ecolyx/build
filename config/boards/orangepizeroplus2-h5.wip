@@ -3,7 +3,7 @@ BOARD_NAME="Orange Pi Zero Plus 2"
 LINUXFAMILY="sun50iw2"
 BOOTCONFIG="orangepi_zeroplus_defconfig"
 #
-MODULES="#w1-sunxi #w1-gpio #w1-therm #sunxi-cir hci_uart rfcomm hidp dhd g_serial"
+MODULES="#w1-sunxi #w1-gpio #w1-therm #gc2035 #vfe_v4l2 #sunxi-cir hci_uart rfcomm hidp dhd g_serial"
 MODULES_NEXT="brcmfmac g_serial"
 MODULES_BLACKLIST=""
 CPUMIN=240000
