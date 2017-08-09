@@ -51,7 +51,7 @@ mkdir -p $DEST/debug
 rm -f $DEST/debug/*.log > /dev/null 2>&1
 date +"%d_%m_%Y-%H_%M_%S" > $DEST/debug/timestamp
 # delete compressed logs older than 7 days
-(cd $DEST/debug && find . -name '*.tgz' -atime +7 -delete) > /dev/null
+(cd $DEST/debug && find . -name '*.tgz' -mtime +7 -delete) > /dev/null
 
 # Script parameters handling
 for i in "$@"; do
@@ -252,6 +252,11 @@ if [[ $IGNORE_UPDATES != yes ]]; then
 	BOOTSOURCEDIR=$BOOTDIR/${BOOTBRANCH##*:}
 	fetch_from_repo "$KERNELSOURCE" "$KERNELDIR" "$KERNELBRANCH" "yes"
 	LINUXSOURCEDIR=$KERNELDIR/${KERNELBRANCH##*:}
+	if [[ -n $ATFSOURCE ]]; then
+		fetch_from_repo "$ATFSOURCE" "$ATFDIR" "$ATFBRANCH" "yes"
+		ATFSOURCEDIR=$ATFDIR/${ATFBRANCH##*:}
+	fi
+	fetch_from_repo "https://github.com/linux-sunxi/sunxi-tools" "sunxi-tools" "branch:master"
 	fetch_from_repo "https://github.com/armbian/config" "armbian-config" "branch:dev"
 fi
 
@@ -271,6 +276,9 @@ done
 
 # Compile u-boot if packed .deb does not exist
 if [[ ! -f $DEST/debs/${CHOSEN_UBOOT}_${REVISION}_${ARCH}.deb ]]; then
+	if [[ -n $ATFSOURCE ]]; then
+		compile_atf
+	fi
 	compile_uboot
 fi
 

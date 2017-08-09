@@ -101,14 +101,10 @@ install_common()
 	display_alert "Installing u-boot" "$CHOSEN_UBOOT" "info"
 	chroot $SDCARD /bin/bash -c "DEVICE=/dev/null dpkg -i /tmp/debs/${CHOSEN_UBOOT}_${REVISION}_${ARCH}.deb" >> $DEST/debug/install.log 2>&1
 
-	display_alert "Installing headers" "${CHOSEN_KERNEL/image/headers}" "info"
-	chroot $SDCARD /bin/bash -c "dpkg -i /tmp/debs/${CHOSEN_KERNEL/image/headers}_${REVISION}_${ARCH}.deb" >> $DEST/debug/install.log 2>&1
-
-	# install firmware
-	#if [[ -f $SDCARD/tmp/debs/${CHOSEN_KERNEL/image/firmware-image}_${REVISION}_${ARCH}.deb ]]; then
-	#	display_alert "Installing firmware" "${CHOSEN_KERNEL/image/firmware-image}" "info"
-	#	chroot $SDCARD /bin/bash -c "dpkg -i /tmp/debs/${CHOSEN_KERNEL/image/firmware-image}_${REVISION}_${ARCH}.deb" >> $DEST/debug/install.log 2>&1
-	#fi
+	if [[ $INSTALL_HEADERS == yes ]]; then
+		display_alert "Installing headers" "${CHOSEN_KERNEL/image/headers}" "info"
+		chroot $SDCARD /bin/bash -c "dpkg -i /tmp/debs/${CHOSEN_KERNEL/image/headers}_${REVISION}_${ARCH}.deb" >> $DEST/debug/install.log 2>&1
+	fi
 
 	if [[ -f $SDCARD/tmp/debs/armbian-firmware_${REVISION}_${ARCH}.deb ]]; then
 		display_alert "Installing generic firmware" "armbian-firmware" "info"
@@ -125,11 +121,10 @@ install_common()
 	chroot $SDCARD /bin/bash -c "dpkg -i /tmp/debs/$RELEASE/${CHOSEN_ROOTFS}_${REVISION}_${ARCH}.deb" >> $DEST/debug/install.log 2>&1
 
 	# freeze armbian packages
-	if [[ $BSPFREEZE == "yes" ]]; then
-		display_alert "Freeze armbian packages" "$BOARD" "info"
-		if [[ "$BRANCH" != "default" ]]; then MINIBRANCH="-"$BRANCH; fi
+	if [[ $BSPFREEZE == yes ]]; then
+		display_alert "Freezing Armbian packages" "$BOARD" "info"
 		chroot $SDCARD /bin/bash -c "apt-mark hold ${CHOSEN_KERNEL} ${CHOSEN_KERNEL/image/headers} \
-		linux-u-boot-${BOARD}-${BRANCH} linux-dtb${MINIBRANCH}-${LINUXFAMILY}" >> $DEST/debug/install.log 2>&1
+			linux-u-boot-${BOARD}-${BRANCH} ${CHOSEN_KERNEL/image/dtb}" >> $DEST/debug/install.log 2>&1
 	fi
 
 	# copy boot splash images
