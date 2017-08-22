@@ -18,6 +18,8 @@ install_common()
 
 	# add dummy fstab entry to make mkinitramfs happy
 	echo "/dev/mmcblk0p1 / $ROOTFS_TYPE defaults 0 1" >> $SDCARD/etc/fstab
+	# required for initramfs-tools-core on Stretch since it ignores the / fstab entry
+	echo "/dev/mmcblk0p2 /usr $ROOTFS_TYPE defaults 0 2" >> $SDCARD/etc/fstab
 
 	# create modules file
 	if [[ $BRANCH == dev && -n $MODULES_DEV ]]; then
@@ -188,6 +190,24 @@ install_distribution_specific()
 	stretch)
 		# remove doubled uname from motd
 		[[ -f $SDCARD/etc/update-motd.d/10-uname ]] && rm $SDCARD/etc/update-motd.d/10-uname
+		# rc.local is not existing in stretch but we might need it
+		cat <<-EOF >$SDCARD/etc/rc.local
+		#!/bin/sh -e
+		#
+		# rc.local
+		#
+		# This script is executed at the end of each multiuser runlevel.
+		# Make sure that the script will "exit 0" on success or any other
+		# value on error.
+		#
+		# In order to enable or disable this script just change the execution
+		# bits.
+		#
+		# By default this script does nothing.
+
+		exit 0
+		EOF
+		chroot $SDCARD /bin/bash -c "chmod +x /etc/rc.local; systemctl daemon-reload"
 		;;
 	esac
 }

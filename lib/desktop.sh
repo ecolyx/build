@@ -20,12 +20,14 @@ install_desktop ()
 		# install optimized chromium configuration
 		cp $SRC/config/chromium.conf $SDCARD/etc/chromium-browser/default
 	fi
-	# install dedicated startup icons
-	cp $SRC/packages/blobs/desktop/icons/${RELEASE}.png $SDCARD/usr/share/pixmaps
 
 	# install default desktop settings
 	cp -R $SRC/packages/blobs/desktop/skel/. $SDCARD/etc/skel
 	cp -R $SRC/packages/blobs/desktop/skel/. $SDCARD/root
+
+	# install dedicated startup icons
+	cp $SRC/packages/blobs/desktop/icons/${DISTRIBUTION,,}.png $SDCARD/usr/share/pixmaps
+	sed 's/xenial.png/'${DISTRIBUTION,,}'.png/' -i $SDCARD/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml
 
 	# install wallpapers
 	mkdir -p $SDCARD/usr/share/backgrounds/xfce/
@@ -55,7 +57,6 @@ install_desktop ()
 
 	# install logo for login screen
 	cp $SRC/packages/blobs/desktop/icons/armbian.png $SDCARD/usr/share/pixmaps
-	cp -R $SRC/packages/blobs/desktop/lightdm $SDCARD/etc
 
 	# Compile Turbo Frame buffer for sunxi
 	if [[ $LINUXFAMILY == sun* && $BRANCH == default ]]; then

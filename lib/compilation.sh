@@ -12,6 +12,7 @@
 # compile_uboot
 # compile_kernel
 # compile_sunxi_tools
+# install_rkbin_tools
 # grab_version
 # find_toolchain
 # advanced_patch
@@ -62,6 +63,8 @@ compile_atf()
 		${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'}
 
 	[[ ${PIPESTATUS[0]} -ne 0 ]] && exit_with_error "ATF compilation failed"
+
+	[[ $(type -t atf_custom_postprocess) == function ]] && atf_custom_postprocess
 
 	local atftempdir=$SRC/.tmp/atf-${LINUXFAMILY}-${BOARD}-${BRANCH}
 	mkdir -p $atftempdir
@@ -161,6 +164,8 @@ compile_uboot()
 
 		[[ ${PIPESTATUS[0]} -ne 0 ]] && exit_with_error "U-boot compilation failed"
 
+		[[ $(type -t uboot_custom_postprocess) == function ]] && uboot_custom_postprocess
+
 		# copy files to build directory
 		for f in $target_files; do
 			local f_src=$(cut -d':' -f1 <<< $f)
@@ -181,9 +186,13 @@ compile_uboot()
 	[[ \$DEVICE == /dev/null ]] && exit 0
 	[[ -z \$DEVICE ]] && DEVICE="/dev/mmcblk0"
 	[[ \$(type -t setup_write_uboot_platform) == function ]] && setup_write_uboot_platform
-	echo "Updating u-boot on device \$DEVICE" >&2
-	write_uboot_platform \$DIR \$DEVICE
-	sync
+	if [[ -b \$DEVICE ]]; then
+		echo "Updating u-boot on \$DEVICE" >&2
+		write_uboot_platform \$DIR \$DEVICE
+		sync
+	else
+		echo "Device \$DEVICE does not exist, skipping" >&2
+	fi
 	exit 0
 	EOF
 	chmod 755 $SRC/.tmp/$uboot_name/DEBIAN/postinst
@@ -384,6 +393,20 @@ compile_sunxi_tools()
 	fi
 }
 
+install_rkbin_tools()
+{
+	# install only if git commit hash changed
+	cd $SRC/cache/sources/rkbin-tools
+	# need to check if /usr/local/bin/sunxi-fexc to detect new Docker containers with old cached sources
+	if [[ ! -f .commit_id || $(git rev-parse @ 2>/dev/null) != $(<.commit_id) || ! -f /usr/local/bin/loaderimage ]]; then
+		display_alert "Installing" "rkbin-tools" "info"
+		mkdir -p /usr/local/bin/
+		install -m 755 tools/loaderimage /usr/local/bin/
+		install -m 755 tools/trust_merger /usr/local/bin/
+		git rev-parse @ 2>/dev/null > .commit_id
+	fi
+}
+
 grab_version()
 {
 	local ver=()
@@ -405,15 +428,18 @@ find_toolchain()
 	local dist=10
 	local toolchain=""
 	# extract target major.minor version from expression
-	local target_ver=$(grep -oE "[[:digit:]].[[:digit:]]" <<< "$expression")
+	local target_ver=$(grep -oE "[[:digit:]]+\.[[:digit:]]" <<< "$expression")
 	for dir in $SRC/cache/toolchains/*/; do
 		# check if is a toolchain for current $ARCH
 		[[ ! -f ${dir}bin/${compiler}gcc ]] && continue
 		# get toolchain major.minor version
-		local gcc_ver=$(${dir}bin/${compiler}gcc -dumpversion | grep -oE "^[[:digit:]].[[:digit:]]")
+		local gcc_ver=$(${dir}bin/${compiler}gcc -dumpversion | grep -oE "^[[:digit:]]+\.[[:digit:]]")
 		# check if toolchain version satisfies requirement
 		awk "BEGIN{exit ! ($gcc_ver $expression)}" >/dev/null || continue
 		# check if found version is the closest to target
+		# may need different logic here with more than 1 digit minor version numbers
+		# numbers: 3.9 > 3.10; versions: 3.9 < 3.10
+		# dpkg --compare-versions can be used here if operators are changed
 		local d=$(awk '{x = $1 - $2}{printf "%.1f\n", (x > 0) ? x : -x}' <<< "$target_ver $gcc_ver")
 		if awk "BEGIN{exit ! ($d < $dist)}" >/dev/null ; then
 			dist=$d

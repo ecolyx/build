@@ -131,7 +131,7 @@ case $DISPLAY_MANAGER in
 	;;
 
 	lightdm)
-	PACKAGE_LIST_DESKTOP="$PACKAGE_LIST_DESKTOP lightdm-gtk-greeter lightdm"
+	PACKAGE_LIST_DESKTOP="$PACKAGE_LIST_DESKTOP lightdm lightdm-gtk-greeter"
 	;;
 
 	*)
@@ -152,6 +152,7 @@ case $RELEASE in
 	;;
 	stretch)
 	PACKAGE_LIST_RELEASE="man-db less kbd net-tools netcat-openbsd"
+	PACKAGE_LIST_DESKTOP="$PACKAGE_LIST_DESKTOP thunderbird chromium tango-icon-theme paprefs numix-gtk-theme"
 	;;
 esac
 

@@ -137,11 +137,11 @@ if [[ -z $BOARD ]]; then
 				options+=("$(basename $board | cut -d'.' -f1)" "$(head -1 $board | cut -d'#' -f2)")
 			done
 		else
-			for board in $SRC/config/boards/*.csc; do
-				options+=("$(basename $board | cut -d'.' -f1)" "\Z1(CSC)\Zn $(head -1 $board | cut -d'#' -f2)")
-			done
 			for board in $SRC/config/boards/*.wip; do
 				options+=("$(basename $board | cut -d'.' -f1)" "\Z1(WIP)\Zn $(head -1 $board | cut -d'#' -f2)")
+			done
+			for board in $SRC/config/boards/*.csc; do
+				options+=("$(basename $board | cut -d'.' -f1)" "\Z1(CSC)\Zn $(head -1 $board | cut -d'#' -f2)")
 			done
 			for board in $SRC/config/boards/*.eos; do
 				options+=("$(basename $board | cut -d'.' -f1)" "\Z1(EOS)\Zn $(head -1 $board | cut -d'#' -f2)")
@@ -258,9 +258,11 @@ if [[ $IGNORE_UPDATES != yes ]]; then
 	fi
 	fetch_from_repo "https://github.com/linux-sunxi/sunxi-tools" "sunxi-tools" "branch:master"
 	fetch_from_repo "https://github.com/armbian/config" "armbian-config" "branch:dev"
+	fetch_from_repo "https://github.com/rockchip-linux/rkbin" "rkbin-tools" "branch:master"
 fi
 
 compile_sunxi_tools
+install_rkbin_tools
 
 # define package names
 DEB_BRANCH=${BRANCH//default}
